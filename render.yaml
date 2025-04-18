@@ -1,0 +1,45 @@
+name: rokai-trading
+region: us
+services:
+  - type: web
+    name: rokai-trading-api
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        value: mongodb+srv://abrahamisaiolvera:${DB_PASSWORD}@rokai.gynaifg.mongodb.net/rokai-trading?retryWrites=true&w=majority&appName=rokai
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX
+        value: 100
+      - key: BCRYPT_SALT_ROUNDS
+        value: 10
+      - key: TOKEN_EXPIRATION
+        value: 86400
+    autoDeploy: true
+    healthCheckPath: /api/health
+    
+  - type: web
+    name: rokai-trading-frontend
+    env: static
+    buildCommand: echo "Static site deployment"
+    staticPublishPath: ./
+    routes:
+      - path: /*
+    envVars:
+      - key: BACKEND_URL
+        value: ${rokai-trading-api.RENDER_EXTERNAL_URL}
+
+databases:
+  - name: rokai-trading-db
+    type: mongodb
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
