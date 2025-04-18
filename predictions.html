@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Platform - AI Predictions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="active">
+            <div class="sidebar-header">
+                <h3>AI Trading</h3>
+                <div class="logo-small">ATP</div>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="index.html" data-page="dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-page="portfolio">
+                        <i class="bi bi-wallet2"></i> Portfolio
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="predictions.html" data-page="predictions">
+                        <i class="bi bi-graph-up"></i> AI Predictions
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-page="trading">
+                        <i class="bi bi-currency-exchange"></i> Trading
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-page="analytics">
+                        <i class="bi bi-bar-chart"></i> Analytics
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-page="settings">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="theme-switch">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                        <label class="form-check-label" for="darkModeSwitch">
+                            <i class="bi bi-moon"></i>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-info">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="dropdown me-3">
+                            <button class="btn position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    3
+                                </span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                                <li><a class="dropdown-item" href="#">New prediction for AAPL</a></li>
+                                <li><a class="dropdown-item" href="#">Order executed: Buy MSFT</a></li>
+                                <li><a class="dropdown-item" href="#">Portfolio up 2.5% today</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="https://randomuser.me/api/portraits/men/1.jpg" class="rounded-circle me-2" width="32" height="32" alt="User">
+                                <span>John Doe</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="login.html"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- AI Predictions Page -->
+            <div class="page-content active" id="predictions-page">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>AI Predictions</h2>
+                        <div class="d-flex">
+                            <button class="btn btn-outline-secondary me-2">
+                                <i class="bi bi-arrow-repeat"></i> Refresh
+                            </button>
+                            <select class="form-select me-2">
+                                <option>All Markets</option>
+                                <option>US Stocks</option>
+                                <option>Crypto</option>
+                                <option>Forex</option>
+                                <option>Commodities</option>
+                            </select>
+                            <select class="form-select">
+                                <option>All Timeframes</option>
+                                <option>Intraday</option>
+                                <option>Daily</option>
+                                <option>Weekly</option>
+                                <option>Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- AI Models Performance -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    AI Models Performance
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="modelsPerformanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prediction Accuracy -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Prediction Accuracy
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="display-4 text-primary">78%</div>
+                                            <div class="small text-muted">Overall</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="display-4 text-success">82%</div>
+                                            <div class="small text-muted">Buy Signals</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="display-4 text-danger">73%</div>
+                                            <div class="small text-muted">Sell Signals</div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <h6>By Timeframe</h6>
+                                            <table class="table table-sm">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Intraday</td>
+                                                        <td>71%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Daily</td>
+                                                        <td>78%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Weekly</td>
+                                                        <td>83%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Monthly</td>
+                                                        <td>85%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>By Market</h6>
+                                            <table class="table table-sm">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>US Stocks</td>
+                                                        <td>80%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Crypto</td>
+                                                        <td>75%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Forex</td>
+                                                        <td>77%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Commodities</td>
+                                                        <td>79%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Latest Predictions -->
+                        <div class="col-12 mb-4">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>Latest Predictions</div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoTradeSwitch" checked>
+                                        <label class="form-check-label" for="autoTradeSwitch">Auto-Trade</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Symbol</th>
+                                                    <th>Signal</th>
+                                                    <th>Current Price</th>
+                                                    <th>Target Price</th>
+                                                    <th>Potential</th>
+                                                    <th>Timeframe</th>
+                                                    <th>Confidence</th>
+                                                    <th>Generated</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>AAPL</strong></td>
+                                                    <td><span class="badge bg-success">BUY</span></td>
+                                                    <td>$175.50</td>
+                                                    <td>$195.50</td>
+                                                    <td class="text-success">+11.4%</td>
+                                                    <td>5 days</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 6px;">
+                                                            <div class="progress-bar bg-success" role="progressbar" style="width: 85%;" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                                                        </div>
+                                                        <small>85%</small>
+                                                    </td>
+                                                    <td>2 hours ago</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary me-1">Trade</button>
+                                                        <button class="btn btn-sm btn-outline-secondary">Details</button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>MSFT</strong></td>
+                                                    <td><span class="badge bg-success">BUY</span></td>
+                                                    <td>$280.30</td>
+                                                    <td>$295.25</td>
+                                                    <td class="text-success">+5.3%</td>
+                                                    <td>7 days</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 6px;">
+                                                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                                                        </div>
+                                                        <small>75%</small>
+                                                    </td>
+                                                    <td>4 hours ago</td>
+                                      
+(Content truncated due to size limit. Use line ranges to read in chunks)
