@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
 });
 app.use('/api/', apiLimiter);
@@ -21,6 +21,7 @@ app.use('/api/', apiLimiter);
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 
+// Root route
 app.get('/', (req, res) => {
   res.send('🚀 Rokai Trading Platform is live');
 });
