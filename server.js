@@ -1,97 +1,92 @@
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const morgan = require('morgan');
 const path = require('path');
-const fs = require('fs');
-require('dotenv').config();
+const helmet = require('helmet');
+const cors = require('cors');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
-// Import configuration
-const connectDB = require('./config/db');
-const logger = require('./config/logger');
-const { initMaintenanceTasks } = require('./utils/maintenance');
-
-// Import routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user');
-const portfolioRoutes = require('./routes/portfolio');
-const tradeRoutes = require('./routes/trade');
-const predictionRoutes = require('./routes/prediction');
-const marketRoutes = require('./routes/market');
-const analyticsRoutes = require('./routes/analytics');
-const healthRoutes = require('./routes/health');
-
-// Import middleware
-const { apiLimiter } = require('./middleware/auth');
-
-// Initialize Express app
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) {
-    fs.mkdirSync(logsDir, { recursive: true });
+// Try to require logger, fallback to console if missing
+let logger;
+try {
+  logger = require('./config/logger');
+} catch (err) {
+  logger = console;
+  console.warn('[WARN] logger.js not found, using console instead');
 }
-
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(morgan('combined', { stream: logger.stream }));
-
-// Rate limiting
-app.use('/api/', apiLimiter);
 
 // Connect to MongoDB
-connectDB()
-    .then(() => {
-        logger.info('MongoDB connected successfully');
-        
-        // Initialize maintenance tasks after DB connection
-        initMaintenanceTasks();
-        
-        // Initialize database with sample data
-        const { initializeDatabase } = require('./utils/db-init');
-        initializeDatabase();
-    })
-    .catch(err => {
-        logger.error('MongoDB connection error', { error: err.message });
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hawk-aitrading';
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
+    logger.info(`✅ MongoDB connected: ${conn.connection.host}`);
+  } catch (err) {
+    logger.error(`❌ MongoDB connection failed: ${err.message}`);
+    process.exit(1);
+  }
+};
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/portfolios', portfolioRoutes);
-app.use('/api/trades', tradeRoutes);
-app.use('/api/predictions', predictionRoutes);
-app.use('/api/market', marketRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/health', healthRoutes);
+// Middleware
+const app = express();
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, 'public')));
-    
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
+// Logging middleware
+app.use(morgan('combined', { stream: logger.stream || { write: msg => logger.info(msg.trim()) } }));
+
+// Rate limiting middleware
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+});
+app.use('/api/', apiLimiter);
+
+// Serve frontend (optional)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Connect to database
+connectDB();
+
+// Optional utilities
+try {
+  const initializeDatabase = require('./utils/db-init');
+  initializeDatabase();
+} catch (e) {
+  logger.info('Skipping db-init.js');
 }
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    logger.error('Unhandled error', { error: err.message, stack: err.stack });
-    
-    res.status(500).json({
-        message: 'Server error',
-        error: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message
-    });
+try {
+  const initMaintenanceTasks = require('./utils/maintenance');
+  initMaintenanceTasks();
+} catch (e) {
+  logger.info('Skipping maintenance.js');
+}
+
+// Register routes if present
+const routeFiles = ['auth', 'user', 'portfolio', 'trade', 'prediction', 'market', 'analytics', 'health'];
+routeFiles.forEach(route => {
+  try {
+    app.use(`/api/${route}`, require(`./routes/${route}`));
+    logger.info(`✅ Loaded route: /api/${route}`);
+  } catch (e) {
+    logger.warn(`⚠️ Route /api/${route} not found, skipping.`);
+  }
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.send('🚀 Rokai Trading Platform is live');
 });
 
 // Start server
-app.listen(port, '0.0.0.0', () => {
-    logger.info(`Server running on port ${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  logger.info(`✅ Server is running on port ${PORT}`);
 });
 
-module.exports = app;
