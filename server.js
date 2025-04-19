@@ -1,60 +1,58 @@
-require('dotenv').config(); // Load environment variables
-
 const express = require('express');
-const helmet = require('helmet');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+const dotenv = require('dotenv');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const mongoose = require('mongoose');
-const path = require('path');
 
+// Load environment variables
+dotenv.config();
+
+// Initialize Express app
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// ✅ Connect to MongoDB
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-  } catch (err) {
-    console.error(`❌ MongoDB connection failed: ${err.message}`);
-    process.exit(1);
-  }
-};
-
-connectDB();
-
-// 🔒 Middleware
-app.use(helmet({
-  contentSecurityPolicy: false // Disable CSP for development
-}));
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Serve static files from the public directory
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 900000, // 15 minutes
+  max: process.env.RATE_LIMIT_MAX || 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api', limiter);
+
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is healthy' });
 });
 
-app.use('/api/', apiLimiter);
+// API Routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+const portfolioRoutes = require('./routes/portfolio');
+const tradeRoutes = require('./routes/trade');
+const predictionRoutes = require('./routes/prediction');
 
-// 🚀 API Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/user', require('./routes/user'));
-app.use('/api/health', require('./routes/health'));
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/trade', tradeRoutes);
+app.use('/api/prediction', predictionRoutes);
 
-// 🌍 Root route
+// Serve HTML files
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Frontend routes
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -63,38 +61,36 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
-
-app.get('/trading', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'trading.html'));
-});
-
-app.get('/analytics', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
-});
-
 // Handle 404 - Send index.html for any other routes (for SPA routing)
-app.use((req, res, next) => {
+app.get('*', (req, res) => {
+  // Only send index.html for non-API routes
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } else {
-    next();
+    res.status(404).json({ error: 'Route not found' });
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    error: 'Server error',
-    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('✅ MongoDB connected:', mongoose.connection.host);
+    
+    // Initialize database with sample data if needed
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const { initializeDatabase } = require('./utils/db-init');
+        initializeDatabase();
+      } catch (error) {
+        console.error('Error initializing database:', error.message);
+      }
+    }
+  })
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err.message);
   });
-});
 
-// 🖥️ Start server
-const PORT = process.env.PORT || 10000;
+// Start server
 app.listen(PORT, () => {
   console.log(`✅ Server is running on port ${PORT}`);
 });
